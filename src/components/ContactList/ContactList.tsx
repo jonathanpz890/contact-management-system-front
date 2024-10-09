@@ -10,9 +10,11 @@ import { deleteContact } from '../../services/api';
 import toast from 'react-hot-toast';
 
 
-export const ContactList = ({ contacts, toggleModal }: {
+export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditContact }: { 
     contacts: ContactType[];
     toggleModal: () => void;
+    fetchContacts: () => Promise<void>;
+    setEditContact: React.Dispatch<React.SetStateAction<ContactType | null>>;
 }) => {
     const [checkedIds, setCheckedIds] = useState<GridRowSelectionModel>([]);
     const style = contactListStyle();
@@ -28,6 +30,33 @@ export const ContactList = ({ contacts, toggleModal }: {
         { field: 'phone', headerName: 'Phone' },
         { field: 'email', headerName: 'Email' },
     ];
+    const deleteSelectedContacts = async () => {
+        const deletePromises = checkedIds.map((id) => deleteContact(id));
+
+        toast.promise(
+            Promise.allSettled(deletePromises),
+            {
+                loading: 'Deleting...',
+                success: 'Deleted Successfuly',
+                error: 'Failed deleting contacts'
+            }
+        ).then(() => {
+            setCheckedIds([]);
+            fetchContacts();
+        }).catch(error => {
+            toast.error(error.message);
+        })
+    }
+    const editContact = () => {
+        if (checkedIds.length !== 1) {
+            toast('Select a single contact to edit', {
+                icon: '🌚'
+            })
+        } else {
+            const selectedContact = contacts.find(contact => contact.id === checkedIds[0]) || null;
+            setEditContact(selectedContact);
+        }
+    }
     return (
         <Box className='contacts-wrapper' sx={style.contactsWrapper}>
             <Box className='buttons-wrapper' sx={style.buttonsWrapper}>
@@ -35,6 +64,7 @@ export const ContactList = ({ contacts, toggleModal }: {
                     aria-label='Add Contact'
                     variant='contained'
                     sx={style.tableAction}
+                    onClick={deleteSelectedContacts}
                     color='error'
                 >
                     <DeleteIcon />
@@ -43,7 +73,7 @@ export const ContactList = ({ contacts, toggleModal }: {
                     aria-label='Add Contact'
                     variant='contained'
                     sx={style.tableAction}
-                    onClick={() => ''}
+                    onClick={editContact}
                     color='success'
                 >
                     <EditIcon />

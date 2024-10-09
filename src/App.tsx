@@ -7,7 +7,7 @@ import { appStyle } from './App.style';
 import { Box, Button, Fade, IconButton, Input, TextField, Typography } from '@mui/material';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import NewContactModal from './components/NewContactModal/NewContactModal';
+import ContactFormModal from './components/ContactFormModal/ContactFormModal';
 import { Toaster } from 'react-hot-toast';
 
 
@@ -16,6 +16,7 @@ const App = () => {
     const [contacts, setContacts] = useState<ContactType[]>([])
     const [loading, setLoading] = useState<boolean>(false);
     const [modal, setModal] = useState<boolean>(false);
+    const [editContact, setEditContact] = useState<ContactType | null>(null);
 
     const style = appStyle();
     const toggleModal = () => setModal(!modal);
@@ -23,7 +24,6 @@ const App = () => {
         setLoading(true);
         try {
             const response = await getContacts();
-            console.log(response);
             setContacts(response.data);
             setLoading(false);
         } catch (error) {
@@ -35,6 +35,11 @@ const App = () => {
     useEffect(() => {
         fetchContacts();
     }, [])
+    useEffect(() => {
+        if (editContact) {
+            setModal(true);
+        }
+    }, [editContact])
 
     return (
         <Box className="App" sx={style.app}>
@@ -42,13 +47,17 @@ const App = () => {
             <ContactList 
                 contacts={contacts}     
                 toggleModal={toggleModal}
+                fetchContacts={fetchContacts}
+                setEditContact={setEditContact}
             />
-            <NewContactModal 
+            <ContactFormModal 
                 modal={modal}
                 toggleModal={toggleModal}
                 setLoading={setLoading}
                 fetchContacts={fetchContacts}
                 loading={loading}
+                contact={editContact}
+                setEditContact={setEditContact}
             />
             <Toaster />
         </Box >
