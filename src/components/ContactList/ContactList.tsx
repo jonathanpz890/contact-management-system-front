@@ -1,6 +1,6 @@
 import React, { useState, useTransition } from 'react';
 import { Box, Button, Paper, TextField } from '@mui/material';
-import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowSelectionModel, useGridApiRef } from '@mui/x-data-grid';
 import { ContactType } from '../../types/ContactType';
 import { contactListStyle } from './ContactList.style';
 import AddIcon from '@mui/icons-material/Add';
@@ -9,7 +9,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { deleteContact } from '../../services/api';
 import toast from 'react-hot-toast';
 import SearchIcon from '@mui/icons-material/Search';
-
+import FileOpenIcon from '@mui/icons-material/FileOpen';
 
 export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditContact }: {
     contacts: ContactType[];
@@ -23,6 +23,7 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
     const [filteredContacts, setFilteredContacts] = useState<ContactType[]>([]);
 
     const [isPending, startTransition] = useTransition();
+    const dataGridRef = useGridApiRef();
     const style = contactListStyle({ searchOpen });
     const paginationModel = { page: 0, pageSize: 5 };
     const columns: GridColDef[] = [
@@ -82,6 +83,9 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
             setFilteredContacts(filtered);
         });
     };
+    const handleExport = () => {
+        dataGridRef.current.exportDataAsCsv();
+    }
 
     return (
         <Box className='contacts-wrapper' sx={style.contactsWrapper}>
@@ -91,7 +95,7 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
                     variant='contained'
                     sx={style.tableAction}
                     onClick={() => setSearchOpen(!searchOpen)}
-                    color='secondary'
+                    color='inherit'
                 >
                     <SearchIcon />
                 </Button>
@@ -106,6 +110,15 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
                     </Box>
                 </Box>
                 <Box className='action-buttons' sx={style.actionButtons}>
+                    <Button
+                        aria-label='Delete Contact'
+                        variant='contained'
+                        sx={style.tableAction}
+                        onClick={handleExport}
+                        color='secondary'
+                    >
+                        <FileOpenIcon />
+                    </Button>
                     <Button
                         aria-label='Delete Contact'
                         variant='contained'
@@ -136,6 +149,7 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
             </Box>
             <Paper sx={style.paper}>
                 <DataGrid
+                    apiRef={dataGridRef}
                     rows={searchQuery ? filteredContacts : contacts}
                     columns={columns}
                     initialState={{ pagination: { paginationModel } }}
