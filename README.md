@@ -4,9 +4,9 @@
 This is the frontend of the Contact Management System. It allows users to manage contacts and their associated groups with features for creating, updating, deleting, and filtering contacts. Built with React and Material UI, the application provides a user-friendly interface.
 
 ## Tech Stack
-* React (UI library)
-* TypeScript (Static type checking)
-* Material UI (Component library)
+* React
+* TypeScript
+* Material UI
 * React Hook Form (Form management)
 * Yup (Validation schema)
 * React Hot Toast (Notification library)
