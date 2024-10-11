@@ -1,9 +1,9 @@
 # Contact Management System - Frontend
 
-## Description This is the frontend of the Contact Management System. It allows users to manage contacts and their associated groups with features for creating, updating, deleting, and filtering contacts. Built with React and Material UI, the application provides a user-friendly interface.
+## Description 
+This is the frontend of the Contact Management System. It allows users to manage contacts and their associated groups with features for creating, updating, deleting, and filtering contacts. Built with React and Material UI, the application provides a user-friendly interface.
 
 ## Tech Stack
-
 * React (UI library)
 * TypeScript (Static type checking)
 * Material UI (Component library)
@@ -13,11 +13,20 @@
 
 ## How to Run
 
-Clone the repository: ```bash git clone https://github.com/your-repo/frontend.git ```
+Clone the repository: 
+```bash 
+git clone https://github.com/your-repo/frontend.git 
+```
 
-Install dependencies: ```bash npm install ```
+Install dependencies: 
+```bash 
+npm install 
+```
 
-Run the app: ```bash npm start ```
+Run the app: 
+```bash 
+npm start 
+```
 
 Open http://localhost:3001 in your browser to access the app.
 
