@@ -15,7 +15,7 @@ This is the frontend of the Contact Management System. It allows users to manage
 
 Clone the repository: 
 ```bash 
-git clone https://github.com/your-repo/frontend.git 
+git clone https://github.com/jonathanpz890/contact-management-system-front.git 
 ```
 
 Install dependencies: 
@@ -27,8 +27,7 @@ Run the app:
 ```bash 
 npm start 
 ```
-
-Open http://localhost:3001 in your browser to access the app.
+Please run the API first on port 3000 and then run the front and open http://localhost:3001 in your browser to access the app.
 
 ## Key Features
 
