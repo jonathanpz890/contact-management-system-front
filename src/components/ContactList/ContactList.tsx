@@ -28,10 +28,9 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
     const [groupFilter, setGroupFilter] = useState<number>();
     const [filteredContacts, setFilteredContacts] = useState<ContactType[]>([]);
 
-    const [isPending, startTransition] = useTransition();
+    const [_, startTransition] = useTransition();
     const dataGridRef = useGridApiRef();
     const style = contactListStyle({ searchOpen });
-
     const paginationModel = { page: 0, pageSize: 5 };
     const columns: GridColDef[] = [
         { field: 'id', headerName: 'ID', width: 1 },
@@ -83,10 +82,12 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
     }
     useEffect(() => {
         startTransition(() => {
+            //If group filter isn't preset use contacts
             const groupFilteredContacts: ContactType[] = !groupFilter ? contacts : 
                 contacts.filter(contact => contact.groups?.map(group => group.id).includes(groupFilter))
-            console.log({groupFilteredContacts})
+
             const keywords = searchQuery.toLowerCase().split(' ').filter(Boolean);
+            //if search query isn't present - skip filtering by keywords
             const filtered = !searchQuery ? groupFilteredContacts : 
                 groupFilteredContacts.filter(contact => (
                     keywords.every(keyword => {
@@ -139,7 +140,6 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
                             placeholder='Search'
                             sx={style.searchBar}
                             onChange={handleOnSearch}
-                        // {...register('firstName')} 
                         />
                     </Box>
                 </Box>

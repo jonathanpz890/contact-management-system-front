@@ -31,18 +31,19 @@ const ContactFormModal = ({ modal, toggleModal, setLoading, fetchContacts, fetch
 
     const style = modalStyle();
     const validationSchema = Yup.object().shape({
-        firstName: Yup.string().required('First Name is required'),
-        lastName: Yup.string().required('Last Name is required'),
-        country: Yup.string().required('Country is required'),
-        city: Yup.string().required('City is required'),
-        street: Yup.string(),
-        zipcode: Yup.string(),
-        phone: Yup.string().matches(/^[0-9]+$/, 'Phone number is invalid').required('Phone is required'),
-        email: Yup.string().email('Email is invalid'),
+        firstName: Yup.string().trim().required('First Name is required'),
+        lastName: Yup.string().trim().required('Last Name is required'),
+        country: Yup.string().trim().required('Country is required'),
+        city: Yup.string().trim().required('City is required'),
+        street: Yup.string().trim(),
+        zipcode: Yup.string().trim(),
+        phone: Yup.string().matches(/^(\+972|0)([2-9]\d{1})-?\d{7}$/, 'Phone number is invalid')
+            .required('Phone is required'),
+        email: Yup.string().trim().matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Email is invalid'),
         groups: Yup.array().of(
             Yup.object().shape({
                 id: Yup.number().integer().positive('Group ID must be a positive integer').required('Group Id required'),
-                name: Yup.string().required('Group name is required'),
+                name: Yup.string().trim().required('Group name is required'),
             })
         )
     });
@@ -63,10 +64,7 @@ const ContactFormModal = ({ modal, toggleModal, setLoading, fetchContacts, fetch
     });
     const contactGroups = useMemo(() => 
         watch('groups')?.map(group => ({ ...group, label: group.name}))
-    , [contact, watch('groups')])
-    // useEffect(() => {
-    //     console.log(contactGroups)
-    // }, [contactGroups])
+    , [contact, watch('groups'), groups])
     const textFieldLabel = (label: string) => (
         <>
             <span>{label}</span>
@@ -75,26 +73,30 @@ const ContactFormModal = ({ modal, toggleModal, setLoading, fetchContacts, fetch
     )
     const onSubmitForm: SubmitHandler<ContactType> = async (data) => {
         setLoading(true);
-        console.log(data);
-        toast.promise(
-            contact?.id ? updateContact(contact.id, data) : addContact(data),
-            {
-                loading: 'Saving...',
-                success: `Contact ${contact ? 'updated' : 'saved'}`,
-                error: `Failed to ${contact ? 'update' : 'save'} contact`
-            }
-        ).then(async () => {
-            fetchContacts().then(() => {
-                toggleModal();
-                setLoading(false);
-                reset();
-            })
-        }).catch(error => {
-            console.log(error);
-            fetchContacts();
+        try {
+            contact?.id 
+                ? await toast.promise(updateContact(contact.id, data), {
+                    loading: 'Updating contact...',
+                    success: 'Contact updated successfully',
+                    error: 'Failed to update contact'
+                })
+                : await toast.promise(addContact(data), {
+                    loading: 'Adding contact...',
+                    success: 'Contact added successfully',
+                    error: 'Failed to add contact'
+                });
+    
+            await fetchContacts();
+    
+            toggleModal();
+            reset();
+        } catch (error) {
+            console.error(error);
+        } finally {
             setLoading(false);
-        })
-    }
+
+        }
+    };
     const handleResetForm = () => {
         setNewGroupCollapse(false);
         setNewGroupName('');
@@ -143,13 +145,12 @@ const ContactFormModal = ({ modal, toggleModal, setLoading, fetchContacts, fetch
                 error: 'New group failed to save'
             }
         ).then(() => {
-            setLoading(false);
-            setNewGroupName('');
             fetchGroups();
         }).catch(error => {
-            setLoading(false);
-            setNewGroupName('');
             console.log(error);
+        }).finally(() => {
+            setNewGroupName('');
+            setLoading(false);
         })
     }
     const handleCancelNewGroup = () => {

@@ -14,20 +14,20 @@ import { GroupType } from './types/GroupType';
 const App = () => {
     const [contacts, setContacts] = useState<ContactType[]>([])
     const [loading, setLoading] = useState<boolean>(false);
-    const [modal, setModal] = useState<boolean>(false);
+    const [contactFormModal, setContactFormModal] = useState<boolean>(false);
     const [editContact, setEditContact] = useState<ContactType | null>(null);
     const [groups, setGroups] = useState<GroupType[]>([]);
 
     const style = appStyle();
-    const toggleModal = () => setModal(!modal);
+    const toggleModal = () => setContactFormModal(!contactFormModal);
     const fetchContacts = async () => {
         setLoading(true);
         try {
             const response = await getContacts();
-            setLoading(false);
             setContacts(response.data);
         } catch (error) {
-            toast.error('')
+            toast.error('Fetching contacts failed, try again later')
+        } finally {
             setLoading(false);
         }
 
@@ -37,9 +37,9 @@ const App = () => {
         try {
             const response = await getGroups();
             setGroups(response.data);
-            setLoading(false);
         } catch (error) {
-            toast.error('')
+            toast.error('Fetching groups failed, try again later')
+        } finally {
             setLoading(false);
         }
 
@@ -50,12 +50,9 @@ const App = () => {
     }, [])
     useEffect(() => {
         if (editContact) {
-            setModal(true);
+            setContactFormModal(true);
         }
     }, [editContact])
-    useEffect(() => {
-        console.log({contacts})
-    }, [contacts])
 
     return (
         <Box className="App" sx={style.app}>
@@ -69,7 +66,7 @@ const App = () => {
                 groups={groups}
             />
             <ContactFormModal 
-                modal={modal}
+                modal={contactFormModal}
                 toggleModal={toggleModal}
                 setLoading={setLoading}
                 fetchContacts={fetchContacts}
