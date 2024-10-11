@@ -29,6 +29,12 @@ export const contactListStyle = ({ searchOpen }: {
         overflowX: 'hidden',
         transition: 'width 350ms ease-in-out'
     },
+    groupFilterDropdown: {
+        height: 56,
+        width: 300,
+        background: 'white',
+        borderRadius: '4px',
+    },
     searchBar: {
         width: '100%',  
         backgroundColor: 'white',

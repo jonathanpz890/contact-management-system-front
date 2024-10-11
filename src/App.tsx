@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { GridColDef } from '@mui/x-data-grid';
-import { addContact, getContacts } from './services/api';
-import { ContactType } from './types/ContactType';
-import { ContactList } from './components';
+import { Box, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 import { appStyle } from './App.style';
-import { Box, Button, Fade, IconButton, Input, TextField, Typography } from '@mui/material';
-import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { ContactList } from './components';
 import ContactFormModal from './components/ContactFormModal/ContactFormModal';
-import { Toaster } from 'react-hot-toast';
+import { getContacts } from './services/contacts';
+import { getGroups } from './services/groups';
+import { ContactType } from './types/ContactType';
+import { GroupType } from './types/GroupType';
 
 
 
@@ -17,6 +16,7 @@ const App = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [modal, setModal] = useState<boolean>(false);
     const [editContact, setEditContact] = useState<ContactType | null>(null);
+    const [groups, setGroups] = useState<GroupType[]>([]);
 
     const style = appStyle();
     const toggleModal = () => setModal(!modal);
@@ -24,40 +24,60 @@ const App = () => {
         setLoading(true);
         try {
             const response = await getContacts();
+            setLoading(false);
             setContacts(response.data);
+        } catch (error) {
+            toast.error('')
+            setLoading(false);
+        }
+
+    }
+    const fetchGroups = async () => {
+        setLoading(true);
+        try {
+            const response = await getGroups();
+            setGroups(response.data);
             setLoading(false);
         } catch (error) {
-            //TODO: add error
+            toast.error('')
             setLoading(false);
         }
 
     }
     useEffect(() => {
         fetchContacts();
+        fetchGroups();
     }, [])
     useEffect(() => {
         if (editContact) {
             setModal(true);
         }
     }, [editContact])
+    useEffect(() => {
+        console.log({contacts})
+    }, [contacts])
 
     return (
         <Box className="App" sx={style.app}>
-            <Typography variant='h3'>Contact Management System</Typography>
+            <Typography variant='h4'>CONTACT MANAGEMENT SYSTEM</Typography>
             <ContactList 
                 contacts={contacts}     
                 toggleModal={toggleModal}
                 fetchContacts={fetchContacts}
                 setEditContact={setEditContact}
+                loading={loading}
+                groups={groups}
             />
             <ContactFormModal 
                 modal={modal}
                 toggleModal={toggleModal}
                 setLoading={setLoading}
                 fetchContacts={fetchContacts}
+                fetchGroups={fetchGroups}
                 loading={loading}
                 contact={editContact}
                 setEditContact={setEditContact}
+                groups={groups}
             />
             <Toaster />
         </Box >

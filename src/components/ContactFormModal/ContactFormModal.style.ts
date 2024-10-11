@@ -9,5 +9,15 @@ export const modalStyle = (): { [key: string]: React.CSSProperties} => ({
     modalFooter: {
         display: 'flex',
         gap: '10px'
+    },
+    horizontalInputWrapper: {
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'row',
+        gap: '10px',
+        alignItems: 'center',
+    },
+    halfInput: {
+        flex: 1
     }
 })

@@ -1,33 +1,40 @@
-import React, { useState, useTransition } from 'react';
-import { Box, Button, Paper, TextField } from '@mui/material';
-import { DataGrid, GridColDef, GridRowSelectionModel, useGridApiRef } from '@mui/x-data-grid';
+import React, { SyntheticEvent, useEffect, useState, useTransition } from 'react';
+import { Autocomplete, Box, Button, Collapse, Paper, TextField, Tooltip } from '@mui/material';
+import { DataGrid, GridColDef, GridRowSelectionModel, GridValueGetter, useGridApiRef } from '@mui/x-data-grid';
 import { ContactType } from '../../types/ContactType';
 import { contactListStyle } from './ContactList.style';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import { deleteContact } from '../../services/api';
+import { deleteContact } from '../../services/contacts';
 import toast from 'react-hot-toast';
 import SearchIcon from '@mui/icons-material/Search';
 import FileOpenIcon from '@mui/icons-material/FileOpen';
+import CloseIcon from '@mui/icons-material/Close';
+import GroupIcon from '@mui/icons-material/Group';
+import { GroupType } from '../../types/GroupType';
 
-export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditContact }: {
+export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditContact, loading, groups }: {
     contacts: ContactType[];
     toggleModal: () => void;
     fetchContacts: () => Promise<void>;
     setEditContact: React.Dispatch<React.SetStateAction<ContactType | null>>;
+    loading: boolean;
+    groups: GroupType[];
 }) => {
     const [checkedIds, setCheckedIds] = useState<GridRowSelectionModel>([]);
     const [searchOpen, setSearchOpen] = useState<boolean>(false);
     const [searchQuery, setSearchQuery] = useState<string>('');
+    const [groupFilter, setGroupFilter] = useState<number>();
     const [filteredContacts, setFilteredContacts] = useState<ContactType[]>([]);
 
     const [isPending, startTransition] = useTransition();
     const dataGridRef = useGridApiRef();
     const style = contactListStyle({ searchOpen });
+
     const paginationModel = { page: 0, pageSize: 5 };
     const columns: GridColDef[] = [
-        { field: 'id', headerName: "ID" },
+        { field: 'id', headerName: 'ID', width: 1 },
         { field: 'firstName', headerName: 'First Name' },
         { field: 'lastName', headerName: 'Last Name' },
         { field: 'country', headerName: 'Country' },
@@ -36,8 +43,14 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
         { field: 'zipcode', headerName: 'Zipcode' },
         { field: 'phone', headerName: 'Phone' },
         { field: 'email', headerName: 'Email' },
+        { field: 'groups', headerName: 'Groups', valueGetter: (params: any) => (
+            params.map((group: GroupType) => group.name).join(', ')
+        )},
     ];
     const deleteSelectedContacts = async () => {
+        if (!checkedIds.length) {
+            return toast.error('No contacts were selected')
+        }
         const deletePromises = checkedIds.map((id) => deleteContact(id));
 
         toast.promise(
@@ -64,93 +77,125 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
             setEditContact(selectedContact);
         }
     }
-    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
+    const handleOnSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = event.target;
         setSearchQuery(value);
-
-
+    }
+    useEffect(() => {
         startTransition(() => {
-            const keywords = value.toLowerCase().split(' ').filter(Boolean);
-            console.log("Keywords: " + keywords)
-            const filtered = contacts.filter(contact => (
-                keywords.every(keyword => {
-                    console.log(contact.firstName.toLowerCase().includes(keyword))
-                    return contact.firstName.toLowerCase().includes(keyword) ||
-                    contact.lastName.toLowerCase().includes(keyword)
-                })
-            ))
-            console.log(filtered)
+            const groupFilteredContacts: ContactType[] = !groupFilter ? contacts : 
+                contacts.filter(contact => contact.groups?.map(group => group.id).includes(groupFilter))
+            console.log({groupFilteredContacts})
+            const keywords = searchQuery.toLowerCase().split(' ').filter(Boolean);
+            const filtered = !searchQuery ? groupFilteredContacts : 
+                groupFilteredContacts.filter(contact => (
+                    keywords.every(keyword => {
+                        console.log(contact.firstName.toLowerCase().includes(keyword))
+                        return contact.firstName.toLowerCase().includes(keyword) ||
+                            contact.lastName.toLowerCase().includes(keyword)
+                    })
+                ))
             setFilteredContacts(filtered);
         });
-    };
+    }, [searchQuery, groupFilter]);
+    const handleGroupFilterChange = (event: SyntheticEvent<Element, Event>, value: { label: string; id: number; name: string; } | null): void => {
+        setGroupFilter(value?.id);
+    }
     const handleExport = () => {
         dataGridRef.current.exportDataAsCsv();
     }
+    const toggleSearchBar = () => setSearchOpen(!searchOpen);
 
     return (
         <Box className='contacts-wrapper' sx={style.contactsWrapper}>
             <Box className='actions-wrapper' sx={style.actionsWrapper}>
-                <Button
-                    aria-label='Search'
-                    variant='contained'
-                    sx={style.tableAction}
-                    onClick={() => setSearchOpen(!searchOpen)}
-                    color='inherit'
-                >
-                    <SearchIcon />
-                </Button>
+                <Tooltip title='Filter Groups' placement='top'>
+                    <Autocomplete
+                        options={groups.map(group => ({ ...group, label: group.name }))}
+                        sx={style.groupFilterDropdown}
+                        onChange={handleGroupFilterChange}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label='Groups'
+                            />
+                        )}
+                    />
+                </Tooltip>
+                <Tooltip title='Search' placement='top'>
+                    <Button
+                        aria-label='Search'
+                        variant='contained'
+                        sx={style.tableAction}
+                        onClick={toggleSearchBar}
+                        color='inherit'
+                    >
+                        {searchOpen ? <CloseIcon /> : <SearchIcon />}
+                    </Button>
+                </Tooltip>
                 <Box sx={style.searchBarWrapper}>
                     <Box sx={style.animationWrapper}>
                         <TextField
-                            label='Search'
+                            placeholder='Search'
                             sx={style.searchBar}
-                            onChange={handleSearchChange}
+                            onChange={handleOnSearch}
                         // {...register('firstName')} 
                         />
                     </Box>
                 </Box>
                 <Box className='action-buttons' sx={style.actionButtons}>
-                    <Button
-                        aria-label='Delete Contact'
-                        variant='contained'
-                        sx={style.tableAction}
-                        onClick={handleExport}
-                        color='secondary'
-                    >
-                        <FileOpenIcon />
-                    </Button>
-                    <Button
-                        aria-label='Delete Contact'
-                        variant='contained'
-                        sx={style.tableAction}
-                        onClick={deleteSelectedContacts}
-                        color='error'
-                    >
-                        <DeleteIcon />
-                    </Button>
-                    <Button
-                        aria-label='Edit Contact'
-                        variant='contained'
-                        sx={style.tableAction}
-                        onClick={handleEditContact}
-                        color='success'
-                    >
-                        <EditIcon />
-                    </Button>
-                    <Button
-                        aria-label='Add Contact'
-                        variant='contained'
-                        sx={style.tableAction}
-                        onClick={toggleModal}
-                    >
-                        <AddIcon />
-                    </Button>
+
+                    <Tooltip title='Export' placement='top'>
+                        <Button
+                            aria-label='Export'
+                            variant='contained'
+                            sx={style.tableAction}
+                            onClick={handleExport}
+                            color='secondary'
+                        >
+                            <FileOpenIcon />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title='Delete Contact' placement='top'>
+                        <Button
+                            aria-label='Delete Contact'
+                            variant='contained'
+                            sx={style.tableAction}
+                            onClick={deleteSelectedContacts}
+                            color='error'
+                        >
+                            <DeleteIcon />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title='Edit Contact' placement='top'>
+                        <Button
+                            aria-label='Edit Contact'
+                            variant='contained'
+                            sx={style.tableAction}
+                            onClick={handleEditContact}
+                            color='success'
+                        >
+                            <EditIcon />
+                        </Button>
+                    </Tooltip>
+
+                    <Tooltip title='Add Contact' placement='top'>
+                        <Button
+                            aria-label='Add Contact'
+                            variant='contained'
+                            sx={style.tableAction}
+                            onClick={toggleModal}
+                        >
+                            <AddIcon />
+                        </Button>
+                    </Tooltip>
                 </Box>
             </Box>
             <Paper sx={style.paper}>
                 <DataGrid
+                    loading={loading}
                     apiRef={dataGridRef}
-                    rows={searchQuery ? filteredContacts : contacts}
+                    rows={searchQuery || groupFilter ? filteredContacts : contacts}
                     columns={columns}
                     initialState={{ pagination: { paginationModel } }}
                     pageSizeOptions={[5, 10]}
