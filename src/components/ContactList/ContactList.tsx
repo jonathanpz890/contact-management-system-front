@@ -42,9 +42,11 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
         { field: 'zipcode', headerName: 'Zipcode' },
         { field: 'phone', headerName: 'Phone' },
         { field: 'email', headerName: 'Email' },
-        { field: 'groups', headerName: 'Groups', valueGetter: (params: any) => (
-            params.map((group: GroupType) => group.name).join(', ')
-        )},
+        {
+            field: 'groups', headerName: 'Groups', valueGetter: (params: any) => (
+                params.map((group: GroupType) => group.name).join(', ')
+            )
+        },
     ];
     const deleteSelectedContacts = async () => {
         if (!checkedIds.length) {
@@ -83,12 +85,12 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
     useEffect(() => {
         startTransition(() => {
             //If group filter isn't preset use contacts
-            const groupFilteredContacts: ContactType[] = !groupFilter ? contacts : 
+            const groupFilteredContacts: ContactType[] = !groupFilter ? contacts :
                 contacts.filter(contact => contact.groups?.map(group => group.id).includes(groupFilter))
 
             const keywords = searchQuery.toLowerCase().split(' ').filter(Boolean);
             //if search query isn't present - skip filtering by keywords
-            const filtered = !searchQuery ? groupFilteredContacts : 
+            const filtered = !searchQuery ? groupFilteredContacts :
                 groupFilteredContacts.filter(contact => (
                     keywords.every(keyword => {
                         console.log(contact.firstName.toLowerCase().includes(keyword))
@@ -103,7 +105,12 @@ export const ContactList = ({ contacts, toggleModal, fetchContacts, setEditConta
         setGroupFilter(value?.id);
     }
     const handleExport = () => {
-        dataGridRef.current.exportDataAsCsv();
+        dataGridRef.current.exportDataAsCsv({
+            //If there are selected rows export them, if not, export all
+            getRowsToExport: !checkedIds.length ? (params) => (
+                params.apiRef.current.getAllRowIds()
+            ) : undefined
+        });
     }
     const toggleSearchBar = () => setSearchOpen(!searchOpen);
 
