@@ -186,6 +186,7 @@ const ContactFormModal = ({ modal, toggleModal, setLoading, fetchContacts, fetch
                     <Autocomplete
                         disablePortal
                         options={Object.values(countries).map(country => country.name)}
+                        value={watch('country')}
                         renderInput={(params) =>
                             <TextField
                                 {...params}
